@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "target": "ES2019",
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "./dist",
+    "removeComments": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true
+  },
+  "include": [
+    "src"
+  ]
+}

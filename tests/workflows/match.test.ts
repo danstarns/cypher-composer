@@ -52,4 +52,33 @@ describe("match tests", () => {
 
     expect(params).toEqual({ user_name: "dan" });
   });
+
+  test("should match and return a node plus a relationship", () => {
+    const composer = new CypherComposer();
+
+    const user = composer.node("user", "User").where({ name: "dan" });
+    const posts = composer.node("posts", "Post");
+    const hasPosts = composer.relationship({
+      from: user,
+      to: posts,
+      label: "HAS_POSTS",
+      name: "hasPost",
+    });
+
+    composer.return([hasPosts, user]);
+
+    const [cypher, params] = composer.toCypher();
+
+    expect(trimmer(cypher)).toEqual(
+      trimmer(`
+        MATCH (posts:Post) 
+        MATCH (user:User) 
+        WHERE user.name = $user_name 
+        MATCH (user)-[hasPost:HAS_POSTS]->(posts) 
+        RETURN hasPost, user
+      `)
+    );
+
+    expect(params).toEqual({ user_name: "dan" });
+  });
 });

@@ -1,5 +1,5 @@
 import { CypherComposer, Relationship, Node } from "../classes";
-import { MatchStatement, WhereClause } from "../types";
+import { MatchStatement } from "../types";
 import createMatchStatement from "./create-match-statement";
 
 function toCypher(composer: CypherComposer): [string, any] {
@@ -8,79 +8,48 @@ function toCypher(composer: CypherComposer): [string, any] {
     params: any;
   } = { strs: [], params: {} };
 
-  const nodeMatchStatements = new Map<Node, MatchStatement<"NODE">>();
-  const relationshipMatchStatements = new Map<
-    Relationship,
-    MatchStatement<"RELATIONSHIP">
-  >();
+  const nodeMatchStatements = new Map<Node, MatchStatement>();
+  const relationshipMatchStatements = new Map<Relationship, MatchStatement>();
+  const returnNames: string[] = [];
 
   if (composer.returns?.length) {
-    const returnNames: string[] = [];
-
     composer.returns.forEach((entity) => {
       returnNames.push(entity.name);
 
       if (entity instanceof Relationship) {
         if (!relationshipMatchStatements.has(entity)) {
           const matchStmt = createMatchStatement(entity);
-          relationshipMatchStatements.set(
-            entity,
-            matchStmt as MatchStatement<"RELATIONSHIP">
-          );
+          relationshipMatchStatements.set(entity, matchStmt as MatchStatement);
 
           [entity.to, entity.from].forEach((n) => {
             if (!nodeMatchStatements.has(n)) {
               const matchStmt = createMatchStatement(n);
-
-              nodeMatchStatements.set(n, matchStmt as MatchStatement<"NODE">);
+              nodeMatchStatements.set(n, matchStmt as MatchStatement);
             }
           });
         }
-
-        return;
       }
 
-      if (!nodeMatchStatements.has(entity)) {
-        const matchStmt = createMatchStatement(entity as Node);
-
-        nodeMatchStatements.set(entity, matchStmt as MatchStatement<"NODE">);
+      if (entity instanceof Node) {
+        if (!nodeMatchStatements.has(entity)) {
+          const matchStmt = createMatchStatement(entity as Node);
+          nodeMatchStatements.set(entity, matchStmt as MatchStatement);
+        }
       }
     });
+  }
 
-    nodeMatchStatements.forEach((matchStmt, entity) => {
-      const match = `MATCH (${entity.name}:${entity.labels.join(":")})`;
-      let where: string | undefined = undefined;
-      let params: any = {};
+  nodeMatchStatements.forEach((matchStmt) => {
+    results.params = { ...results.params, ...matchStmt.args };
+    results.strs = [...results.strs, matchStmt.str];
+  });
 
-      if (matchStmt.where) {
-        where = `WHERE ${matchStmt.where.predicates.join(" AND ")}`;
-        params = { ...params, ...(matchStmt.where.args || {}) };
-      }
+  relationshipMatchStatements.forEach((matchStmt) => {
+    results.params = { ...results.params, ...matchStmt.args };
+    results.strs = [...results.strs, matchStmt.str];
+  });
 
-      results.params = { ...results.params, ...params };
-      results.strs = [...results.strs, match, ...(where ? [where] : [])];
-    });
-
-    relationshipMatchStatements.forEach((matchStmt, entity) => {
-      const fromNode = `(${entity.from.name})`;
-      const toNode = `(${entity.to.name})`;
-
-      const relStr = `[${entity.name}:${entity.label}]`;
-
-      const match = `MATCH ${fromNode}-${relStr}->${toNode}`;
-
-      let where: string | undefined = undefined;
-      let params: any = {};
-
-      if (matchStmt.where) {
-        where = `WHERE ${matchStmt.where.predicates.join(" AND ")}`;
-        params = { ...params, ...(matchStmt.where.args || {}) };
-      }
-
-      results.params = { ...results.params, ...params };
-      results.strs = [...results.strs, match, ...(where ? [where] : [])];
-    });
-
+  if (returnNames.length) {
     results.strs.push(`RETURN ${returnNames.join(", ")}`);
   }
 

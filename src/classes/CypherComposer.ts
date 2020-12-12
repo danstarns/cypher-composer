@@ -38,13 +38,23 @@ class CypherComposer {
     return relationship;
   }
 
-  return(value: Node | Relationship): CypherComposer {
+  return(value: Node | Relationship | (Node | Relationship)[]): CypherComposer {
     if (!this.returns) {
       this.returns = [];
     }
 
-    value.used = true;
-    this.returns.push(value);
+    let values: (Node | Relationship)[] = [];
+
+    if (Array.isArray(value)) {
+      values = value;
+    } else {
+      values = [value];
+    }
+
+    values.forEach((v) => {
+      v.used = true;
+      (this.returns as any[]).push(v);
+    });
 
     return this;
   }

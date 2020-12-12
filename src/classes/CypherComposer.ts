@@ -1,11 +1,15 @@
 import Node from "./Node";
+import Relationship, { RelationshipConstructor } from "./Relationship";
+import * as methods from "../methods";
 
 class CypherComposer {
-  private nodes: Node[];
-  private returns?: Node[];
+  public nodes: Node[];
+  public returns?: (Node | Relationship)[];
+  public relationships: Relationship[];
 
   constructor() {
     this.nodes = [];
+    this.relationships = [];
   }
 
   node(name: string, label?: string | string[]): Node;
@@ -20,54 +24,33 @@ class CypherComposer {
     return node;
   }
 
-  return(node: Node): CypherComposer {
+  relationship(input: string): Relationship | undefined;
+  relationship(input: RelationshipConstructor): Relationship;
+  relationship(
+    input: string | RelationshipConstructor
+  ): Relationship | undefined {
+    if (typeof input === "string") {
+      return this.relationships.find((x) => x.name === input);
+    }
+
+    const relationship = new Relationship(input);
+
+    return relationship;
+  }
+
+  return(value: Node | Relationship): CypherComposer {
     if (!this.returns) {
       this.returns = [];
     }
 
-    node.used = true;
-    this.returns.push(node);
+    value.used = true;
+    this.returns.push(value);
 
     return this;
   }
 
   toCypher(): [string, any] {
-    const toMatch = this.nodes.filter((x) => x.type === "MATCH" && x.used);
-
-    interface Res {
-      strs: string[];
-      params: any;
-    }
-
-    const results: Res = { strs: [], params: {} };
-
-    const matchAndParams = toMatch.reduce(
-      (res: Res, node) => {
-        res.strs.push(`MATCH (${node.name}:${node.labels.join(":")})`);
-
-        if (node.wherePredicates?.length) {
-          res.strs.push(`WHERE ${node.wherePredicates.join(" ")}`);
-          res.params = { ...res.params, ...(node.whereArgs || {}) };
-        }
-
-        return res;
-      },
-      {
-        strs: [],
-        params: {},
-      }
-    ) as Res;
-
-    results.strs = [...results.strs, matchAndParams.strs.join("\n")];
-    results.params = { ...results.params, ...matchAndParams.params };
-
-    if (this.returns?.length) {
-      const returnNames = this.returns.map((x) => x.name);
-
-      results.strs.push(`RETURN ${returnNames.join(", ")}`);
-    }
-
-    return [results.strs.join("\n"), results.params];
+    return methods.toCypher(this);
   }
 }
 

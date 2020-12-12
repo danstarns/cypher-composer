@@ -41,12 +41,12 @@ function toCypher(composer: CypherComposer): [string, any] {
 
   nodeMatchStatements.forEach((matchStmt) => {
     results.params = { ...results.params, ...matchStmt.args };
-    results.strs = [...results.strs, matchStmt.str];
+    results.strs.push(matchStmt.str);
   });
 
   relationshipMatchStatements.forEach((matchStmt) => {
     results.params = { ...results.params, ...matchStmt.args };
-    results.strs = [...results.strs, matchStmt.str];
+    results.strs.push(matchStmt.str);
   });
 
   if (returnNames.length) {

@@ -6,19 +6,33 @@ class CypherComposer {
   public nodes: Node[];
   public returns?: (Node | Relationship)[];
   public relationships: Relationship[];
+  public nameSet: Set<string>;
 
   constructor() {
     this.nodes = [];
     this.relationships = [];
+    this.nameSet = new Set();
   }
 
-  node(name: string, label?: string | string[]): Node;
-  node(name: string, label: string | string[]): Node {
+  node(name: string, label?: string | string[]): Node {
+    if (!label) {
+      const existing = this.nodes.find((x) => x.name === name);
+
+      if (existing) {
+        return existing;
+      }
+    }
+
+    if (this.nameSet.has(name)) {
+      throw new Error(`duplicate identifier ${name}`);
+    }
+
     const node = new Node({
       name,
       labels: label ? (Array.isArray(label) ? label : [label]) : [],
     });
 
+    this.nameSet.add(name);
     this.nodes.push(node);
 
     return node;
@@ -33,7 +47,14 @@ class CypherComposer {
       return this.relationships.find((x) => x.name === input);
     }
 
+    if (this.nameSet.has(input.name)) {
+      throw new Error(`duplicate identifier ${input.name}`);
+    }
+
     const relationship = new Relationship(input);
+
+    this.nameSet.add(input.name);
+    this.relationships.push(relationship);
 
     return relationship;
   }

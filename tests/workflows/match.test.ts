@@ -19,7 +19,7 @@ describe("match tests", () => {
       `)
     );
 
-    expect(params).toMatchObject({
+    expect(params).toEqual({
       user_name: "dan",
     });
   });
@@ -50,6 +50,6 @@ describe("match tests", () => {
       `)
     );
 
-    expect(params).toMatchObject({});
+    expect(params).toEqual({ user_name: "dan" });
   });
 });

@@ -31,7 +31,7 @@ Calling this implementation a `Composer` over `Builder` comes with;
 1. No need to keep track of variables, scopes and the sequence of operations
 2. Exposes real abstractions (connect, disconnect ect ect)
 
-This implementation keeps things simple by using only exposing 2 comcepts `Node` and `Relationship` where you stick them together like pieces of lego. In the background, while your composing Cypher, a virtual COM(Cypher Object Model) is manipulated & finally complied when `.toCypher` is called. Using the COM is what allows users of the composer to not worry about keeping track of variables, scopes and the sequence of operations... What this means is that users don't have to work with Cypher languages nuances such as `WITH`. Before 'compiling' the COM into cypher `cypher-composer` will look at all the operations you have called and return optimal cypher.
+This implementation keeps things simple by using only exposing 2 concepts `Node` and `Relationship` where you stick each together like pieces of lego. In the background, while your composing Cypher, a virtual COM(Cypher Object Model) is manipulated & finally complied when `.toCypher` is called. Using the COM is what allows users of the composer to not worry about keeping track of variables, scopes and the sequence of operations... What this means is that users don't have to work with Cypher languages nuances such as `WITH` thus making the library feel 'lucid'. Before 'compiling' the COM into cypher `cypher-composer` will look at all the operations you have called and return optimal cypher.
 
 Using the composer allows Users to interact with some 'pre made' common 'workflows' such as; 
 
@@ -40,8 +40,6 @@ Using the composer allows Users to interact with some 'pre made' common 'workflo
 3. connect
 4. disconnect
 5. delete
-
-
 
 ## Getting Started
 ### Installing
@@ -72,7 +70,7 @@ const hasGroup = composer
         to: group,
         label: "HAS_GROUP",
         properties: { joined: new Date() }
-    })
+    });
 
 composer.create(user);
 node.connect(hasGroup);
@@ -93,7 +91,9 @@ console.log(cypher);
 const composer = new CypherComposer();
 
 const group = composer
-    .node("group", "Group").where({ name: "beer-group" });
+    .node("group", "Group")
+    .where({ name: "beer-group" });
+
 composer.return(group);
 
 const [cypher] = composer.toCypher();
@@ -108,16 +108,20 @@ console.log(cypher);
 ```js
 const composer = new CypherComposer();
 
-const user = composer.node("user", "User").where({ id: "some id" });
-const group = user.thru(
-    composer.relationship({
-        from: user,
-        to: composer.node("group", "Group"),
-        label: "HAS_GROUP"
-    })
-);
-composer.return(group);
+const user = composer
+        .node("user", "User")
+        .where({ id: "some id" });
 
+const group = user
+    .thru(
+        composer.relationship({
+            from: user,
+            to: composer.node("group", "Group"),
+            label: "HAS_GROUP"
+        })
+    );
+
+composer.return(group);
 
 const [cypher] = composer.toCypher();
 console.log(cypher);
@@ -132,14 +136,17 @@ console.log(cypher);
 ```js
 const composer = new CypherComposer();
 
-const user = composer.node("user", "User")
-const group = composer.node("group", "Group")
+const user = composer.node("user", "User");
+
+const group = composer.node("group", "Group");
+
 const hasGroup =  composer.relationship({
     from: user,
     to: group,
     label: "HAS_GROUP",
     name: "hasGroup"
 });
+
 composer.return(hasGroup);
 
 const [cypher] = composer.toCypher();
@@ -159,6 +166,7 @@ const composer = new CypherComposer();
 const node = composer.create(
   composer.node("user", "User", { name: "dan" })
 );
+
 composer.return(node);
 
 const [cypher] = composer.toCypher();

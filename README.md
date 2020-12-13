@@ -31,9 +31,17 @@ Calling this implementation a `Composer` over `Builder` comes with;
 1. No need to keep track of variables, scopes and the sequence of operations
 2. Exposes real abstractions (connect, disconnect ect ect)
 
-This implementation keeps things simple by using only 2 Classes as the building blocks; `Node` and `Relationship` from here you stick together `Node`(s) and `Relationship`(s) like pieces of lego. In the background, while your composing Cypher, a virtual COM(Cypher Object Model) is manipulated & finally complied when `.toCypher` is called.
+This implementation keeps things simple by using only exposing 2 comcepts `Node` and `Relationship` where you stick them together like pieces of lego. In the background, while your composing Cypher, a virtual COM(Cypher Object Model) is manipulated & finally complied when `.toCypher` is called. Using the COM is what allows users of the composer to not worry about keeping track of variables, scopes and the sequence of operations... What this means is that users don't have to work with Cypher languages nuances such as `WITH`. Before 'compiling' the COM into cypher `cypher-composer` will look at all the operations you have called and return optimal cypher.
 
-Using the COM is what allows users of the composer to no worry about keeping track of variables, scopes and the sequence of operations. The COM is traversed and the Optimal cypher is generated.
+Using the composer allows Users to interact with some 'pre made' common 'workflows' such as; 
+
+1. create
+2. update
+3. connect
+4. disconnect
+5. delete
+
+
 
 ## Getting Started
 ### Installing
@@ -45,30 +53,31 @@ $ npm install cypher-composer
 
 ```js
 const CypherComposer = require("cypher-composer");
-
 const composer = new CypherComposer();
 
-const node = composer.create(
-    composer.node({
-        name: "user", 
+const user = composer
+    .node({ 
+        name: "user",
         label: "User",
         properties: { name: "Dan" }
-    })
-);
+    });
 
-const group = composer.node("group", "Group").where({ name: "beer-group" });
+const group = composer
+    .node("group", "Group")
+    .where({ name: "beer-group" });
 
-node.connect(
-    composer.relationship({
+const hasGroup = composer
+    .relationship({
         from: node,
         to: group,
         label: "HAS_GROUP",
         properties: { joined: new Date() }
     })
-);
 
-const cypher = composer.toCypher();
+composer.create(user);
+node.connect(hasGroup);
 
+const [cypher] = composer.toCypher();
 console.log(cypher);
 // CREATE (user:User {name: "Dan"})
 // WITH user
@@ -78,53 +87,39 @@ console.log(cypher);
 ```
 
 ## Matching
-```js
-const CypherComposer = require("cypher-composer");
 
+### Matching a node
+```js
 const composer = new CypherComposer();
 
-const group = composer.node("group", "Group").where({ name: "beer-group" });
-
+const group = composer
+    .node("group", "Group").where({ name: "beer-group" });
 composer.return(group);
 
-const cypher = composer.toCypher();
-
+const [cypher] = composer.toCypher();
 console.log(cypher);
 // MATCH (group:Group)
 // WHERE group.name = "beer-group"
 // RETURN group
 ```
 
-### Matching across relaitonships
+### Matching a node thru a relationship
 
 ```js
-const CypherComposer = require("cypher-composer");
-
 const composer = new CypherComposer();
 
 const user = composer.node("user", "User").where({ id: "some id" });
-
-const group = composer.node(
-    composer.relationship({
-        from: user,
-        to: composer.node("group", "Group"),
-        label: "HAS_GROUP",
-        properties: { joined: new Date() }
-    })
-);
-
 const group = user.thru(
     composer.relationship({
         from: user,
         to: composer.node("group", "Group"),
-        label: "HAS_GROUP",
-        properties: { joined: new Date() }
+        label: "HAS_GROUP"
     })
 );
 composer.return(group);
 
-const cypher = composer.toCypher();
 
+const [cypher] = composer.toCypher();
 console.log(cypher);
 // MATCH (user:User)
 // WHERE user.id = "some id"
@@ -132,3 +127,42 @@ console.log(cypher);
 // RETURN group
 ```
 
+### Matching a relationship
+
+```js
+const composer = new CypherComposer();
+
+const user = composer.node("user", "User")
+const group = composer.node("group", "Group")
+const hasGroup =  composer.relationship({
+    from: user,
+    to: group,
+    label: "HAS_GROUP",
+    name: "hasGroup"
+});
+composer.return(hasGroup);
+
+const [cypher] = composer.toCypher();
+console.log(cypher);
+// MATCH (user:User)
+// MATCH (group:Group)
+// MATCH (user)-[hasGroup:HAS_GROUP]->(group:Group)
+// RETURN hasGroup
+```
+
+## Creating
+
+### Creating a node
+```js
+const composer = new CypherComposer();
+
+const node = composer.create(
+  composer.node("user", "User", { name: "dan" })
+);
+composer.return(node);
+
+const [cypher] = composer.toCypher();
+console.log(cypher);
+// CREATE (user:User {name: "dan"})
+// RETURN user
+```

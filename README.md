@@ -31,7 +31,7 @@ Calling this implementation a `Composer` over `Builder` comes with;
 1. No need to keep track of variables, scopes and the sequence of operations
 2. Exposes real abstractions (connect, disconnect ect ect)
 
-This implementation keeps things simple by using only 2 Classes as the building blocks; `Node` and `Relationship` from here you stick together Nodes and relationships like pieces of lego. In the background, while your composing Cypher, a virtual COM(Cypher Object Model) is manipulated & finally complied when `.toCypher` is called.
+This implementation keeps things simple by using only 2 Classes as the building blocks; `Node` and `Relationship` from here you stick together `Node`(s) and `Relationship`(s) like pieces of lego. In the background, while your composing Cypher, a virtual COM(Cypher Object Model) is manipulated & finally complied when `.toCypher` is called.
 
 Using the COM is what allows users of the composer to no worry about keeping track of variables, scopes and the sequence of operations. The COM is traversed and the Optimal cypher is generated.
 
@@ -113,12 +113,22 @@ const group = composer.node(
     })
 );
 
+const group = user.thru(
+    composer.relationship({
+        from: user,
+        to: composer.node("group", "Group"),
+        label: "HAS_GROUP",
+        properties: { joined: new Date() }
+    })
+);
 composer.return(group);
 
 const cypher = composer.toCypher();
 
 console.log(cypher);
-// MATCH (group:Group)<-[:HAS_GROUP]-(user:User {id: "some id"})
+// MATCH (user:User)
+// WHERE user.id = "some id"
+// MATCH (user)-[:HAS_GROUP]->(group:Group)
 // RETURN group
 ```
 

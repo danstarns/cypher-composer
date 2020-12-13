@@ -1,6 +1,7 @@
 export interface NodeConstructor {
   name: string;
   labels: string[];
+  properties?: any;
 }
 
 class Node {
@@ -10,11 +11,13 @@ class Node {
   public labels: string[];
   public type: "MATCH" | "CREATE";
   public used?: boolean;
+  public properties?: any;
 
   constructor(input: NodeConstructor) {
     this.name = input.name;
     this.labels = input.labels || [];
     this.type = "MATCH";
+    this.properties = input.properties;
   }
 
   where(obj: any): Node {

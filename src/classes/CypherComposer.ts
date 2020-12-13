@@ -1,20 +1,43 @@
 import Node from "./Node";
 import Relationship, { RelationshipConstructor } from "./Relationship";
 import * as methods from "../methods";
+import { CreateOperation } from "../types";
 
 class CypherComposer {
   public nodes: Node[];
   public returns?: (Node | Relationship)[];
   public relationships: Relationship[];
   public nameSet: Set<string>;
+  public operations: CreateOperation[];
 
   constructor() {
     this.nodes = [];
     this.relationships = [];
     this.nameSet = new Set();
+    this.operations = [];
   }
 
-  node(name: string, label?: string | string[]): Node {
+  create(entity: Node): Node {
+    if (entity.whereArgs?.length) {
+      throw new Error(`cant create a MATCH node ${entity.name}`);
+    }
+
+    const existing = this.operations.find(
+      (x) => x.kind === "CREATE" && x.entity === entity
+    );
+
+    if (existing) {
+      throw new Error(`cant create ${entity.name} twice`);
+    }
+
+    this.operations.push({ kind: "CREATE", entity });
+
+    entity.type = "CREATE";
+
+    return entity;
+  }
+
+  node(name: string, label?: string | string[], properties?: any): Node {
     if (!label) {
       const existing = this.nodes.find((x) => x.name === name);
 
@@ -30,6 +53,7 @@ class CypherComposer {
     const node = new Node({
       name,
       labels: label ? (Array.isArray(label) ? label : [label]) : [],
+      properties,
     });
 
     this.nameSet.add(name);

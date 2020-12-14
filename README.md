@@ -184,9 +184,9 @@ const composer = new CypherComposer();
 const user = composer
     .node({ 
         name: "user",
-        label: "User",
-        properties: { name: "Dan" }
-    });
+        label: "User"
+    })
+    .where({ name: "Dan" });
 
 const group = composer
     .node("group", "Group")
@@ -200,12 +200,11 @@ const hasGroup = composer
         properties: { joined: new Date() }
     });
 
-composer.create(user);
 node.connect(hasGroup);
 
 const [cypher] = composer.toCypher();
 console.log(cypher);
-// CREATE (user:User {name: "Dan"})
+// MATCH (user:User {name: "Dan"})
 // MATCH (group:Group {name: "beer-group"})
 // MERGE (user)-[:HAS_GROUP {joined: "date"}]->(group)
 ```
@@ -249,7 +248,6 @@ const hasGroup = composer
         from: node,
         to: group,
         label: "HAS_GROUP",
-        properties: { joined: new Date() },
         name: "hasGroup"
     });
 
@@ -259,7 +257,7 @@ const [cypher] = composer.toCypher();
 console.log(cypher);
 // MATCH (user:User {name: "Dan"})
 // MATCH (group:Group {name: "beer-group"})
-// MATCH (user)-[hasGroup:HAS_GROUP {joined: "date"}]->(group)
+// MATCH (user)-[hasGroup:HAS_GROUP]->(group)
 // SET hasGroup.joined = "date"
 ```
 
@@ -299,7 +297,6 @@ const hasGroup = composer
         from: node,
         to: group,
         label: "HAS_GROUP",
-        properties: { joined: new Date() },
         name: "hasGroup"
     });
 
@@ -309,6 +306,6 @@ const [cypher] = composer.toCypher();
 console.log(cypher);
 // MATCH (user:User {name: "Dan"})
 // MATCH (group:Group {name: "beer-group"})
-// MATCH (user)-[hasGroup:HAS_GROUP {joined: "date"}]->(group)
+// MATCH (user)-[hasGroup:HAS_GROUP]->(group)
 // DELETE hasGroup
 ```

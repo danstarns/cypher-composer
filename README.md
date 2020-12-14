@@ -10,8 +10,8 @@ Example showing a 1-1 query builder to cypher mapping
 ```js
 const query = 
    match("user", "User", { active: true })
-  .where({ "user.age": greaterThan(18) })
-  .return("user");
+    .where({ "user.age": greaterThan(18) })
+    .return("user");
 ```
 
 Example showing above generated cypher
@@ -109,8 +109,8 @@ console.log(cypher);
 const composer = new CypherComposer();
 
 const user = composer
-        .node("user", "User")
-        .where({ id: "some id" });
+    .node("user", "User")
+    .where({ id: "some id" });
 
 const group = user
     .thru(
@@ -173,4 +173,37 @@ const [cypher] = composer.toCypher();
 console.log(cypher);
 // CREATE (user:User {name: "dan"})
 // RETURN user
+```
+
+### Creating a relationship
+```js
+const composer = new CypherComposer();
+
+const user = composer
+    .node({ 
+        name: "user",
+        label: "User",
+        properties: { name: "Dan" }
+    });
+
+const group = composer
+    .node("group", "Group")
+    .where({ name: "beer-group" });
+
+const hasGroup = composer
+    .relationship({
+        from: node,
+        to: group,
+        label: "HAS_GROUP",
+        properties: { joined: new Date() }
+    });
+
+composer.create(user);
+node.connect(hasGroup);
+
+const [cypher] = composer.toCypher();
+console.log(cypher);
+// CREATE (user:User {name: "Dan"})
+// MATCH (group:Group {name: "beer-group"})
+// MERGE (user)-[:HAS_GROUP {joined: "date"}]->(group)
 ```

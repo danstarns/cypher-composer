@@ -1,4 +1,6 @@
 # cypher-composer
+> Proof on concept 🚧🏗
+
 Javascript Cypher composer for [Neo4j](https://neo4j.com/).
 
 ## Why
@@ -206,4 +208,58 @@ console.log(cypher);
 // CREATE (user:User {name: "Dan"})
 // MATCH (group:Group {name: "beer-group"})
 // MERGE (user)-[:HAS_GROUP {joined: "date"}]->(group)
+```
+
+## Updating
+
+### Updating a node
+```js
+const composer = new CypherComposer();
+
+const user = composer.node("user", "User", { name: "dan" })
+
+composer.update(user, { properties: { name: "Dan" } })
+
+composer.return(user);
+
+const [cypher] = composer.toCypher();
+console.log(cypher);
+// MATCH (user:User {name: "dan"})
+// SET user.name = "Dan"
+// RETURN user
+```
+
+### Updating a relationship
+```js
+const composer = new CypherComposer();
+
+const user = composer
+    .node({ 
+        name: "user",
+        label: "User",
+    })
+    .where({ name: "Dan" });
+
+
+const group = composer
+    .node("group", "Group")
+    .where({ name: "beer-group" });
+
+const hasGroup = composer
+    .relationship({
+        from: node,
+        to: group,
+        label: "HAS_GROUP",
+        properties: { joined: new Date() },
+        name: "hasGroup"
+    });
+
+composer.update(hasGroup, { properties: { joined: new Date() } })
+
+const [cypher] = composer.toCypher();
+console.log(cypher);
+// MATCH (user:User {name: "Dan"})
+// MATCH (group:Group {name: "beer-group"})
+// MATCH (user)-[hasGroup:HAS_GROUP {joined: "date"}]->(group)
+// SET hasGroup.joined = "date"
 ```

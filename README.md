@@ -63,7 +63,10 @@ const user = composer
     });
 
 const group = composer
-    .node("group", "Group")
+    .node({
+        name: "group", 
+        label: "Group"
+    })
     .where({ name: "beer-group" });
 
 const hasGroup = composer

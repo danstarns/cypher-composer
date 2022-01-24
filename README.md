@@ -75,7 +75,7 @@ const hasGroup = composer
     });
 
 composer.create(user);
-node.connect(hasGroup);
+user.connect(hasGroup);
 
 const [cypher] = composer.toCypher();
 console.log(cypher);
